@@ -1,0 +1,323 @@
+{
+  "config": {
+    "random_state": 42,
+    "dev_iterations": 4,
+    "precip_min_rel_spread": 0.2,
+    "precip_max_zero_share": 0.3,
+    "exclude_degenerate_precip": true,
+    "use_log_precip": true,
+    "lift_high": 2.0,
+    "lift_elevated": 1.0
+  },
+  "data_integrity": {
+    "region_counts": {
+      "Central_Africa": 240,
+      "East_Africa": 240,
+      "North_Africa": 240,
+      "Sahel_Region": 240,
+      "South_Africa": 240
+    },
+    "duplicate_count": 0,
+    "nan_temp": 0,
+    "nan_precip": 0,
+    "precip_unit_status": "UNCONFIRMED (values look like mean daily precipitation)",
+    "zero_counts": {
+      "Central_Africa": 0,
+      "East_Africa": 1,
+      "North_Africa": 95,
+      "Sahel_Region": 123,
+      "South_Africa": 14
+    },
+    "regions": [
+      "Central_Africa",
+      "East_Africa",
+      "North_Africa",
+      "Sahel_Region",
+      "South_Africa"
+    ]
+  },
+  "precipitation_pooling": {
+    "std_monthly_rate_none": 0.024043016075830953,
+    "std_monthly_rate_anomaly": 0.04590222070069838,
+    "auc_none": 0.5640532870973324,
+    "auc_anomaly": 0.51827031792192,
+    "selected_mode": "none",
+    "decision_reason": "Decision condition not met (auc_anom: 0.518, threshold required: 0.585)."
+  },
+  "temperature_drift": {
+    "slopes_per_decade": {
+      "Central_Africa": 0.3080451928125296,
+      "East_Africa": 0.16238409874021303,
+      "North_Africa": 0.4054313429024737,
+      "Sahel_Region": 0.14733224119282443,
+      "South_Africa": 0.2111764992784415
+    },
+    "fixed_mode": {
+      "train": 0.11497005988023952,
+      "val": 0.23333333333333334,
+      "test": 0.3657142857142857,
+      "drift": 0.2507442258340462
+    },
+    "detrended_mode": {
+      "train": 0.118562874251497,
+      "val": 0.10555555555555556,
+      "test": 0.24,
+      "drift": 0.12143712574850299
+    }
+  },
+  "cv_results": {
+    "temperature": {
+      "selected": "Ridge (Regress Risk)",
+      "stats": {
+        "Ridge (Regress Risk)": {
+          "m_auc": 0.70880524198602,
+          "s_auc": 0.05324591985508274,
+          "m_pr": 0.37630806906299386,
+          "s_pr": 0.15510784438015682
+        },
+        "RF (Regress Risk)": {
+          "m_auc": 0.7185186361387735,
+          "s_auc": 0.02584722897994998,
+          "m_pr": 0.3351175504454333,
+          "s_pr": 0.09909422792742423
+        },
+        "XGB (Regress Risk)": {
+          "m_auc": 0.7035215393338964,
+          "s_auc": 0.03298252879162996,
+          "m_pr": 0.32205493479912123,
+          "s_pr": 0.09879033153936338
+        },
+        "LogReg (Classif)": {
+          "m_auc": 0.7263402989947613,
+          "s_auc": 0.05748344180558021,
+          "m_pr": 0.40779679498125027,
+          "s_pr": 0.17270324425295322
+        },
+        "Random Forest (Classif)": {
+          "m_auc": 0.7126130146725113,
+          "s_auc": 0.0411882047765312,
+          "m_pr": 0.3287116719148476,
+          "s_pr": 0.07840788085255704
+        },
+        "XGBoost (Classif)": {
+          "m_auc": 0.6757579412041655,
+          "s_auc": 0.030693995191772693,
+          "m_pr": 0.2736635297256387,
+          "s_pr": 0.05084775751417254
+        },
+        "Persistence": {
+          "m_auc": 0.6416866577049644,
+          "s_auc": 0.11534525056606047,
+          "m_pr": 0.31420191178798224,
+          "s_pr": 0.163452870246776
+        },
+        "Seasonal Climatology": {
+          "m_auc": 0.46654684383517336,
+          "s_auc": 0.039431655423438024,
+          "m_pr": 0.17484963616959082,
+          "s_pr": 0.05509470798725273
+        },
+        "Always-Unusual": {
+          "m_auc": 0.5,
+          "s_auc": 0.0,
+          "m_pr": 0.18148148148148147,
+          "s_pr": 0.05487234218529279
+        }
+      }
+    },
+    "precipitation": {
+      "selected": "Ridge (Regress Risk)",
+      "stats": {
+        "Ridge (Regress Risk)": {
+          "m_auc": 0.5826538713039002,
+          "s_auc": 0.01835338076930157,
+          "m_pr": 0.4651911839217813,
+          "s_pr": 0.02020715895129303
+        },
+        "RF (Regress Risk)": {
+          "m_auc": 0.570014264178999,
+          "s_auc": 0.022099731039587855,
+          "m_pr": 0.4617613874570541,
+          "s_pr": 0.05394216247018804
+        },
+        "XGB (Regress Risk)": {
+          "m_auc": 0.5465767525695807,
+          "s_auc": 0.00901234814853475,
+          "m_pr": 0.44740861418653144,
+          "s_pr": 0.04167214080810293
+        },
+        "LogReg (Classif)": {
+          "m_auc": 0.5051591075569632,
+          "s_auc": 0.018669564322966386,
+          "m_pr": 0.39976814766893254,
+          "s_pr": 0.0432402585306899
+        },
+        "Random Forest (Classif)": {
+          "m_auc": 0.5006285073711182,
+          "s_auc": 0.027624767112564754,
+          "m_pr": 0.3986465054500365,
+          "s_pr": 0.05105353825050162
+        },
+        "XGBoost (Classif)": {
+          "m_auc": 0.46879751163654376,
+          "s_auc": 0.02218359975745173,
+          "m_pr": 0.36748678052347866,
+          "s_pr": 0.03214465063966639
+        },
+        "Persistence": {
+          "m_auc": 0.5454182501913232,
+          "s_auc": 0.028594531812731673,
+          "m_pr": 0.4048835156600071,
+          "s_pr": 0.013966066431414511
+        },
+        "Seasonal Climatology": {
+          "m_auc": 0.5212221172730808,
+          "s_auc": 0.02694851504700355,
+          "m_pr": 0.39520851740405516,
+          "s_pr": 0.019526051471828194
+        },
+        "Always-Unusual": {
+          "m_auc": 0.5,
+          "s_auc": 0.0,
+          "m_pr": 0.3786848072562358,
+          "s_pr": 0.025046170107000595
+        }
+      }
+    }
+  },
+  "final_test": {
+    "temperature": {
+      "target": "temperature",
+      "selected_name": "Ridge (Regress Risk)",
+      "test_auc": 0.7710347296813462,
+      "best_baseline_name": "Persistence",
+      "best_baseline_auc": 0.6748120300751881,
+      "ci_lower": -0.011553273427471034,
+      "ci_upper": 0.29824561403508765,
+      "verdict": "NO RELIABLE SKILL OVER BASELINE (Cond A: True [diff: +0.096], Cond B (CI>0): False [-0.012], Cond C (CV Beat): True)",
+      "reg_aucs": {
+        "Central_Africa": 0.7816091954022989,
+        "East_Africa": 0.7606837606837606,
+        "North_Africa": 0.8260869565217391,
+        "Sahel_Region": 0.8076923076923077,
+        "South_Africa": 0.7413793103448276
+      },
+      "brier": 0.16106085282404567,
+      "rows_evaluated": 175
+    },
+    "precipitation": {
+      "target": "precipitation",
+      "selected_name": "Ridge (Regress Risk)",
+      "test_auc": 0.562358276643991,
+      "best_baseline_name": "Seasonal Climatology",
+      "best_baseline_auc": 0.5521541950113379,
+      "ci_lower": -0.11422413793103442,
+      "ci_upper": 0.17948717948717946,
+      "verdict": "NO RELIABLE SKILL OVER BASELINE (Cond A: False [diff: +0.010], Cond B (CI>0): False [-0.114], Cond C (CV Beat): True)",
+      "reg_aucs": {
+        "Central_Africa": 0.5416666666666667,
+        "East_Africa": 0.536,
+        "North_Africa": 0.27083333333333337,
+        "Sahel_Region": 0.6461538461538462,
+        "South_Africa": 0.6174242424242423
+      },
+      "brier": 0.21665548385386624,
+      "rows_evaluated": 143
+    }
+  },
+  "live_forecast": {
+    "latest_obs": "2024-12",
+    "target_horizon": "2025-01",
+    "records": [
+      {
+        "region": "Central_Africa",
+        "target": "Temperature (High)",
+        "pred_z": -0.68,
+        "risk_pct": 0.4,
+        "lift": 0.04,
+        "tier": "Low"
+      },
+      {
+        "region": "Central_Africa",
+        "target": "Precipitation Rate",
+        "pred_z": 0.21,
+        "risk_pct": 36.6,
+        "lift": 1.67,
+        "tier": "Elevated"
+      },
+      {
+        "region": "East_Africa",
+        "target": "Temperature (High)",
+        "pred_z": 0.08,
+        "risk_pct": 8.8,
+        "lift": 0.92,
+        "tier": "Low"
+      },
+      {
+        "region": "East_Africa",
+        "target": "Precipitation Rate",
+        "pred_z": -0.01,
+        "risk_pct": 33.2,
+        "lift": 1.51,
+        "tier": "Elevated"
+      },
+      {
+        "region": "North_Africa",
+        "target": "Temperature (High)",
+        "pred_z": 0.03,
+        "risk_pct": 7.9,
+        "lift": 0.82,
+        "tier": "Low"
+      },
+      {
+        "region": "North_Africa",
+        "target": "Precipitation Rate",
+        "pred_z": -0.21,
+        "risk_pct": 37.4,
+        "lift": 1.71,
+        "tier": "Elevated"
+      },
+      {
+        "region": "Sahel_Region",
+        "target": "Temperature (High)",
+        "pred_z": -0.34,
+        "risk_pct": 1.4,
+        "lift": 0.14,
+        "tier": "Low"
+      },
+      {
+        "region": "Sahel_Region",
+        "target": "Precipitation Rate",
+        "pred_z": null,
+        "risk_pct": null,
+        "lift": null,
+        "tier": "N/A - dry season (degenerate)"
+      },
+      {
+        "region": "South_Africa",
+        "target": "Temperature (High)",
+        "pred_z": 0.76,
+        "risk_pct": 18.9,
+        "lift": 1.98,
+        "tier": "Elevated"
+      },
+      {
+        "region": "South_Africa",
+        "target": "Precipitation Rate",
+        "pred_z": 0.04,
+        "risk_pct": 33.5,
+        "lift": 1.53,
+        "tier": "Elevated"
+      }
+    ],
+    "disclaimer": {
+      "temperature": "Scores are relative risk tiers, not calibrated probabilities",
+      "precipitation": "Calibrated on Folds 1-2"
+    }
+  },
+  "limitations": "1. Observational Temporal Depth vs. WMO Standards:\n   The dataset spans exactly 20 years (2005-2024) across 5 regions.\n   Standard World Meteorological Organization (WMO) climatological normals require 30-year baselines.\n   With 20 years of data, each month has N=14 to 20 samples per region (expanded ~3x to ~42-60\n   under pooled mode). Percentiles retain inherent sampling variance.\n\n2. Macro-Regional Spatial Aggregation:\n   Measurements represent broad spatial averages for 5 African macro-regions (Central_Africa, East_Africa, North_Africa, Sahel_Region, South_Africa).\n   Spatial aggregation dampens acute localized flash droughts, convective rain clusters, and urban microclimates.\n\n3. Unconfirmed Precipitation Unit:\n   Precipitation values in the source dataset range from 0.0 to 30.95 (regional means 0.2 to 5.2).\n   The unit status is: UNCONFIRMED (values look like mean daily precipitation). Relative spread metrics and log1p\n   normalization ensure algorithmic stability regardless of the scalar multiplier.\n\n4. Non-Stationary Warming Trend:\n   Land surface temperature anomalies exhibit statistically positive decadal trends across African regions\n   (ranging up to +0.405 \u00b0C/decade). Linear detrending within each fold mitigates base-rate\n   drift, but non-linear warming residuals remain.\n\n5. Held-Out Evaluation Sample & Developmental Iterations:\n   The final test set (2022-2024) consists of exactly 175 evaluated rows across 5 spatially\n   correlated regions. Cluster bootstrapping by year provides 95% confidence intervals.\n   Note: Model 1 underwent 4 developmental iterations during design before final test freezing.\n\n6. Relative Risk Scope:\n   Predicted risk tiers (High / Elevated / Low) indicate statistical percentile excursions relative to training\n   baselines, not humanitarian emergencies or direct civil protection disaster warnings.",
+  "final_verdict": {
+    "temperature": "NO RELIABLE SKILL OVER BASELINE (Cond A: True [diff: +0.096], Cond B (CI>0): False [-0.012], Cond C (CV Beat): True)",
+    "precipitation": "NO RELIABLE SKILL OVER BASELINE (Cond A: False [diff: +0.010], Cond B (CI>0): False [-0.114], Cond C (CV Beat): True)"
+  }
+}

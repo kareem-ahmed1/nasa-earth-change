@@ -1,0 +1,43 @@
+Target,Split,Model,ROC_AUC,PR_AUC
+temperature,Fold 1,Ridge (Regress Risk),0.7838,0.5668
+temperature,Fold 1,RF (Regress Risk),0.7534,0.4424
+temperature,Fold 1,XGB (Regress Risk),0.7418,0.4402
+temperature,Fold 1,LogReg (Classif),0.8019,0.5817
+temperature,Fold 1,Random Forest (Classif),0.7554,0.4125
+temperature,Fold 1,XGBoost (Classif),0.6672,0.2839
+temperature,Fold 2,Ridge (Regress Risk),0.6653,0.3753
+temperature,Fold 2,RF (Regress Risk),0.6915,0.3596
+temperature,Fold 2,XGB (Regress Risk),0.6613,0.3275
+temperature,Fold 2,LogReg (Classif),0.7145,0.4694
+temperature,Fold 2,Random Forest (Classif),0.657,0.3497
+temperature,Fold 2,XGBoost (Classif),0.6432,0.3302
+temperature,Fold 3,Ridge (Regress Risk),0.6773,0.1868
+temperature,Fold 3,RF (Regress Risk),0.7107,0.2034
+temperature,Fold 3,XGB (Regress Risk),0.7074,0.1984
+temperature,Fold 3,LogReg (Classif),0.6626,0.1723
+temperature,Fold 3,Random Forest (Classif),0.7254,0.2239
+temperature,Fold 3,XGBoost (Classif),0.7169,0.2069
+precipitation,Fold 1,Ridge (Regress Risk),0.604,0.4886
+precipitation,Fold 1,RF (Regress Risk),0.6013,0.5062
+precipitation,Fold 1,XGB (Regress Risk),0.5573,0.4824
+precipitation,Fold 1,LogReg (Classif),0.4865,0.39
+precipitation,Fold 1,Random Forest (Classif),0.4655,0.3466
+precipitation,Fold 1,XGBoost (Classif),0.4659,0.3444
+precipitation,Fold 2,Ridge (Regress Risk),0.5848,0.4393
+precipitation,Fold 2,RF (Regress Risk),0.5551,0.3858
+precipitation,Fold 2,XGB (Regress Risk),0.5472,0.3888
+precipitation,Fold 2,LogReg (Classif),0.4984,0.3524
+precipitation,Fold 2,Random Forest (Classif),0.5035,0.3813
+precipitation,Fold 2,XGBoost (Classif),0.4432,0.3451
+precipitation,Fold 3,Ridge (Regress Risk),0.5592,0.4678
+precipitation,Fold 3,RF (Regress Risk),0.5536,0.4932
+precipitation,Fold 3,XGB (Regress Risk),0.5352,0.471
+precipitation,Fold 3,LogReg (Classif),0.5307,0.4569
+precipitation,Fold 3,Random Forest (Classif),0.533,0.468
+precipitation,Fold 3,XGBoost (Classif),0.4973,0.4129
+temperature,Final Test,Ridge (Regress Risk),0.771,0.5186
+temperature,Final Test,Persistence,0.6748,0.3761
+temperature,Final Test,Seasonal Climatology,0.5504,0.2673
+precipitation,Final Test,Ridge (Regress Risk),0.5624,0.3722
+precipitation,Final Test,Persistence,0.5196,0.3238
+precipitation,Final Test,Seasonal Climatology,0.5522,0.3398

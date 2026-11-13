@@ -1,0 +1,54 @@
+{
+  "config": {
+    "random_state": 42,
+    "dev_iterations": 5,
+    "dev_run_labels": [
+      "v1_initial_exploration",
+      "v2_target_alignment",
+      "v3_risk_score_framework",
+      "v4_zspace_and_units",
+      "v5_detrending_rigor"
+    ],
+    "reset_test_lock": false,
+    "precip_min_rel_spread": 0.2,
+    "precip_max_zero_share": 0.3,
+    "exclude_degenerate_precip": true,
+    "use_log_precip": true,
+    "lift_high": 2.0,
+    "lift_elevated": 1.0,
+    "ridge_alpha_grid": [
+      0.01,
+      0.1,
+      1.0,
+      10.0,
+      100.0
+    ]
+  },
+  "script_sha256": "50aeed1cbc8547c7dabaae50e2ad2a2f21840945c7bd3b53b5603ba436a2433c",
+  "frozen_timestamp_utc": "2026-11-13T14:10:38.737613+00:00",
+  "selected_models": {
+    "temperature": {
+      "approach": "LogReg (Classif)",
+      "alpha": 1.0,
+      "cv_baseline": "Persistence"
+    },
+    "precipitation": {
+      "approach": "Ridge (Regress Risk)",
+      "alpha": 1.0,
+      "cv_baseline": "Persistence",
+      "pooling_mode": "none"
+    }
+  },
+  "calibration_decisions": {
+    "temperature_calibrator_kept": true,
+    "precipitation_calibrator_kept": true
+  },
+  "tier_validation_status": {
+    "temperature": true,
+    "precipitation": false
+  },
+  "tier_thresholds": {
+    "lift_high": 2.0,
+    "lift_elevated": 1.0
+  }
+}
