@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Africa Climate Explorer</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <style>
+      body { font: 16px system-ui, sans-serif; margin: 2rem auto; max-width: 1200px; padding: 0 1rem; color: #1e293b; background: #f8fafc; }
+      h1 { margin-bottom: 0.25rem; }
+      .subtitle { color: #64748b; margin-top: 0; margin-bottom: 1.5rem; }
+      .controls { background: #fff; padding: 1rem 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+      label { font-weight: 500; font-size: 14px; }
+      input, select { margin-left: .4rem; padding: .4rem .6rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+      button { background: #2563eb; color: #fff; border: none; padding: .45rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500; }
+      button:hover { background: #1d4ed8; }
+      #charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); gap: 1.5rem; }
+      .plot-card { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; padding: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+      .plot { min-height: 380px; }
+      .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+      .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.25rem; }
+      .card-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 0.25rem; }
+      .card-value { font-size: 20px; font-weight: bold; color: #0f172a; }
+      .card-sub { font-size: 13px; color: #64748b; margin-top: 0.25rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Africa Climate Explorer</h1>
+    <p class="subtitle">NASA Satellite Monthly Observations & Independent Climate Indicators (2004–2024)</p>
+    
+    <div class="controls">
+      <label>Region: <select id="region"></select></label>
+      <label>Start year: <input id="start" type="number" /></label>
+      <label>End year: <input id="end" type="number" /></label>
+      <button id="load">Load Data</button>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="summary-cards">
+      <div class="card">
+        <div class="card-title">Temperature Trend</div>
+        <div id="kpi-temp-trend" class="card-value">-</div>
+        <div id="kpi-temp-slope" class="card-sub">-</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Precipitation Trend</div>
+        <div id="kpi-precip-trend" class="card-value">-</div>
+        <div id="kpi-precip-slope" class="card-sub">-</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Climate Correlation</div>
+        <div id="kpi-corr" class="card-value">-</div>
+        <div id="kpi-corr-interp" class="card-sub">-</div>
+      </div>
+    </div>
+
+    <div id="charts">
+      <!-- 1. Independent Temperature Anomaly Over Time -->
+      <div class="plot-card">
+        <div id="temp_timeseries" class="plot"></div>
+      </div>
+
+      <!-- 2. Independent Precipitation Over Time -->
+      <div class="plot-card">
+        <div id="precip_timeseries" class="plot"></div>
+      </div>
+
+      <!-- 3. Annual Trends (Sen's Slope) -->
+      <div class="plot-card">
+        <div id="trends" class="plot"></div>
+      </div>
+
+      <!-- 4. Regional Comparison -->
+      <div class="plot-card">
+        <div id="comparison" class="plot"></div>
+      </div>
+    </div>
+
+    <script>
+      const api = window.location.origin.startsWith("http") ? window.location.origin : "http://127.0.0.1:8000";
+      const params = () => new URLSearchParams({
+        region: document.querySelector("#region").value,
+        start_year: document.querySelector("#start").value,
+        end_year: document.querySelector("#end").value
+      });
+
+      async function load() {
+        const query = params();
+        const [chartsResponse, analysisResponse] = await Promise.all([
+          fetch(`${api}/charts?${query}`),
+          fetch(`${api}/analysis?${query}`)
+        ]);
+        if (!chartsResponse.ok || !analysisResponse.ok) throw new Error("API request failed");
+        const charts = await chartsResponse.json();
+        const analysis = await analysisResponse.json();
+
+        // Update KPI Cards
+        const tempTrend = analysis.trends?.temperature_anomaly;
+        const precipTrend = analysis.trends?.precipitation_mm;
+        if (tempTrend) {
+          document.querySelector("#kpi-temp-trend").textContent = tempTrend.direction.toUpperCase();
+          document.querySelector("#kpi-temp-slope").textContent = 
+            tempTrend.sens_slope_per_year ? `${(tempTrend.sens_slope_per_year * 10).toFixed(3)}°C / decade` : 'N/A';
+        }
+        if (precipTrend) {
+          document.querySelector("#kpi-precip-trend").textContent = precipTrend.direction.toUpperCase();
+          document.querySelector("#kpi-precip-slope").textContent = 
+            precipTrend.sens_slope_per_year ? `${(precipTrend.sens_slope_per_year * 10).toFixed(2)} mm / decade` : 'N/A';
+        }
+        if (analysis.correlation) {
+          document.querySelector("#kpi-corr").textContent = `r = ${analysis.correlation.coefficient?.toFixed(2) ?? 'N/A'}`;
+          document.querySelector("#kpi-corr-interp").textContent = analysis.correlation.interpretation;
+        }
+
+        // 1. Independent Temperature Anomaly Over Time
+        Plotly.newPlot("temp_timeseries", [
+          {
+            x: charts.time_series.map(p => p.date),
+            y: charts.time_series.map(p => p.temperature_anomaly),
+            mode: "lines",
+            line: { color: "#e11d48", width: 1.8 },
+            name: "Temp Anomaly (°C)"
+          }
+        ], {
+          title: "Temperature Anomaly Over Time (Monthly)",
+          xaxis: { title: "Date" },
+          yaxis: { title: "Anomaly (°C)" },
+          margin: { t: 50, b: 45, l: 55, r: 25 }
+        });
+
+        // 2. Independent Precipitation Over Time
+        Plotly.newPlot("precip_timeseries", [
+          {
+            x: charts.time_series.map(p => p.date),
+            y: charts.time_series.map(p => p.precipitation_mm),
+            type: "bar",
+            marker: { color: "#0284c7" },
+            name: "Precipitation (mm)"
+          }
+        ], {
+          title: "Precipitation Over Time (Monthly)",
+          xaxis: { title: "Date" },
+          yaxis: { title: "Precipitation (mm)" },
+          margin: { t: 50, b: 45, l: 55, r: 25 }
+        });
+
+        // 3. Annual Trends & Sen's Slope
+        const trendTraces = [];
+        if (charts.trends?.temperature_anomaly) {
+          trendTraces.push(
+            {
+              x: charts.trends.temperature_anomaly.map(p => p.year),
+              y: charts.trends.temperature_anomaly.map(p => p.value),
+              mode: "markers",
+              marker: { color: "#e11d48" },
+              name: "Annual Mean Temp Anomaly"
+            },
+            {
+              x: charts.trends.temperature_anomaly.map(p => p.year),
+              y: charts.trends.temperature_anomaly.map(p => p.sen_line),
+              mode: "lines",
+              line: { color: "#e11d48", dash: "dash" },
+              name: "Temp Sen Slope"
+            }
+          );
+        }
+        Plotly.newPlot("trends", trendTraces, {
+          title: "Annual Temperature Trend (Sen's Slope)",
+          xaxis: { title: "Year" },
+          yaxis: { title: "Temperature Anomaly (°C)" },
+          margin: { t: 50, b: 45, l: 55, r: 25 }
+        });
+
+        // 4. Regional Comparison
+        const regions = [...new Set(charts.yearly_averages_per_region.map(p => p.region))];
+        Plotly.newPlot("comparison", regions.map(region => ({
+          x: charts.yearly_averages_per_region.filter(p => p.region === region).map(p => p.year),
+          y: charts.yearly_averages_per_region.filter(p => p.region === region).map(p => p.temperature_anomaly),
+          mode: "lines+markers",
+          name: region.replace(/_/g, " ")
+        })), {
+          title: "Annual Temperature Anomaly by Region",
+          xaxis: { title: "Year" },
+          yaxis: { title: "Anomaly (°C)" },
+          margin: { t: 50, b: 45, l: 55, r: 25 }
+        });
+      }
+
+      async function initialize() {
+        try {
+          const response = await fetch(`${api}/regions`);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const result = await response.json();
+          document.querySelector("#region").innerHTML =
+            ["all", ...result.regions].map(name => `<option value="${name}">${name.replace(/_/g, " ")}</option>`).join("");
+          document.querySelector("#start").value = result.available_years.start_year;
+          document.querySelector("#end").value = result.available_years.end_year;
+          await load();
+        } catch (error) {
+          console.error("Initialization error:", error);
+          alert("Failed to connect to the climate API at " + api + ". Please ensure the backend server is running.\n\nError: " + error.message);
+        }
+      }
+
+      document.querySelector("#load").addEventListener("click", () => load().catch(error => alert(error.message)));
+      document.querySelector("#region").addEventListener("change", () => load().catch(error => alert(error.message)));
+      document.querySelector("#start").addEventListener("change", () => load().catch(error => alert(error.message)));
+      document.querySelector("#end").addEventListener("change", () => load().catch(error => alert(error.message)));
+      initialize();
+    </script>
+  </body>
+</html>

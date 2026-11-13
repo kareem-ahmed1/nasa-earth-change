@@ -1,0 +1,55 @@
+Target,Split,Model,ROC_AUC,PR_AUC,MSESS,Clipped_Fraction,Max_Abs_Z
+temperature,Fold 1,Ridge (Regress Risk),0.7838,0.5668,0.2373,0.0056,1768.184
+temperature,Fold 1,RF (Regress Risk),0.7534,0.4424,0.2066,0.0,1.055
+temperature,Fold 1,XGB (Regress Risk),0.7418,0.4402,0.2061,0.0,1.125
+temperature,Fold 1,LogReg (Classif),0.8019,0.5817,,0.0,
+temperature,Fold 1,Random Forest (Classif),0.7554,0.4125,,0.0,
+temperature,Fold 1,XGBoost (Classif),0.6672,0.2839,,0.0,
+temperature,Fold 1,Persistence,0.7824,0.5047,,,
+temperature,Fold 1,Seasonal Climatology,0.5218,0.216,,,
+temperature,Fold 1,Always-Unusual,0.5,0.2056,,,
+temperature,Fold 2,Ridge (Regress Risk),0.6653,0.3753,0.0076,0.0167,17240.992
+temperature,Fold 2,RF (Regress Risk),0.6915,0.3596,0.1991,0.0,1.7
+temperature,Fold 2,XGB (Regress Risk),0.6613,0.3275,0.1743,0.0,1.805
+temperature,Fold 2,LogReg (Classif),0.7145,0.4694,,0.0,
+temperature,Fold 2,Random Forest (Classif),0.657,0.3497,,0.0,
+temperature,Fold 2,XGBoost (Classif),0.6432,0.3302,,0.0,
+temperature,Fold 2,Persistence,0.6429,0.3324,,,
+temperature,Fold 2,Seasonal Climatology,0.4288,0.2111,,,
+temperature,Fold 2,Always-Unusual,0.5,0.2333,,,
+temperature,Fold 3,Ridge (Regress Risk),0.6773,0.1868,0.0781,0.0,2.601
+temperature,Fold 3,RF (Regress Risk),0.7107,0.2034,0.1749,0.0,1.573
+temperature,Fold 3,XGB (Regress Risk),0.7074,0.1984,0.1718,0.0,1.475
+temperature,Fold 3,LogReg (Classif),0.6626,0.1723,,0.0,
+temperature,Fold 3,Random Forest (Classif),0.7254,0.2239,,0.0,
+temperature,Fold 3,XGBoost (Classif),0.7169,0.2069,,0.0,
+temperature,Fold 3,Persistence,0.4998,0.1055,,,
+temperature,Fold 3,Seasonal Climatology,0.4485,0.097,,,
+temperature,Fold 3,Always-Unusual,0.5,0.1056,,,
+precipitation,Fold 1,Ridge (Regress Risk),0.604,0.4886,-0.0776,0.0068,3003.417
+precipitation,Fold 1,RF (Regress Risk),0.6013,0.5062,-0.0037,0.0,0.712
+precipitation,Fold 1,XGB (Regress Risk),0.5573,0.4824,-0.0234,0.0,1.009
+precipitation,Fold 1,LogReg (Classif),0.4865,0.39,,0.0,
+precipitation,Fold 1,Random Forest (Classif),0.4655,0.3466,,0.0,
+precipitation,Fold 1,XGBoost (Classif),0.4659,0.3444,,0.0,
+precipitation,Fold 1,Persistence,0.5206,0.3913,,,
+precipitation,Fold 1,Seasonal Climatology,0.4876,0.375,,,
+precipitation,Fold 1,Always-Unusual,0.5,0.381,,,
+precipitation,Fold 2,Ridge (Regress Risk),0.5848,0.4393,0.1317,0.0,2.901
+precipitation,Fold 2,RF (Regress Risk),0.5551,0.3858,0.0447,0.0,0.719
+precipitation,Fold 2,XGB (Regress Risk),0.5472,0.3888,0.0495,0.0,0.813
+precipitation,Fold 2,LogReg (Classif),0.4984,0.3524,,0.0,
+precipitation,Fold 2,Random Forest (Classif),0.5035,0.3813,,0.0,
+precipitation,Fold 2,XGBoost (Classif),0.4432,0.3451,,0.0,
+precipitation,Fold 2,Persistence,0.5855,0.3992,,,
+precipitation,Fold 2,Seasonal Climatology,0.5536,0.389,,,
+precipitation,Fold 2,Always-Unusual,0.5,0.3469,,,
+precipitation,Fold 3,Ridge (Regress Risk),0.5592,0.4678,0.0703,0.0,3.631
+precipitation,Fold 3,RF (Regress Risk),0.5536,0.4932,0.0952,0.0,1.221
+precipitation,Fold 3,XGB (Regress Risk),0.5352,0.471,0.0605,0.0,1.082
+precipitation,Fold 3,LogReg (Classif),0.5307,0.4569,,0.0,
+precipitation,Fold 3,Random Forest (Classif),0.533,0.468,,0.0,
+precipitation,Fold 3,XGBoost (Classif),0.4973,0.4129,,0.0,
+precipitation,Fold 3,Persistence,0.5302,0.4241,,,
+precipitation,Fold 3,Seasonal Climatology,0.5224,0.4216,,,
+precipitation,Fold 3,Always-Unusual,0.5,0.4082,,,
