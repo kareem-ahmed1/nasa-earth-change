@@ -70,6 +70,44 @@ def get_regions(request: Request) -> RegionsResponse:
     )
 
 
+@router.get("/variables")
+def get_variables() -> dict:
+    """Return supported Earth science variables and scientific metadata."""
+    return {
+        "variables": [
+            {
+                "id": "temperature_anomaly",
+                "name": "Surface Temperature Anomaly",
+                "short_name": "Temperature Anomaly",
+                "unit": "°C",
+                "source": "NASA GISTEMP v4 (GISS Surface Temperature Analysis)",
+                "temporal_resolution": "Monthly",
+                "coverage": "2004–2024",
+                "is_default": True,
+                "description": "Monthly surface temperature anomaly relative to regional base periods.",
+            },
+            {
+                "id": "precipitation_mm",
+                "name": "Precipitation",
+                "short_name": "Precipitation",
+                "unit": "mm/day",
+                "source": "NASA POWER / MERRA-2 (Precipitation Corrected)",
+                "temporal_resolution": "Monthly (Mean Daily Rate)",
+                "coverage": "2004–2024",
+                "is_default": False,
+                "description": "Monthly mean daily precipitation rate (PRECTOTCORR) derived from MERRA-2 satellite-model assimilation.",
+            },
+        ]
+    }
+
+
+@router.get("/predict")
+def get_prediction(region: str | None = None, variable: str | None = None) -> dict:
+    """Predict next-month environmental condition risk using Model 1 v6."""
+    from src.predict import predict_next_month
+    return predict_next_month(region=region, variable=variable)
+
+
 @router.get("/data", response_model=DataResponse)
 def get_data(
     request: Request,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from src.cleaning import REGIONS
+from src.cleaning import REGIONS, _normalize_region
 
 
 class FilterError(ValueError):
@@ -31,13 +31,16 @@ def filter_data(
     Raises:
         FilterError: If the region, order, or available year bounds are invalid.
     """
-    normalized_region = region.strip()
-    if normalized_region.lower() == "all":
+    normalized_input = region.strip()
+    if normalized_input.lower() == "all":
         normalized_region = "all"
-    elif normalized_region not in REGIONS:
-        raise FilterError(
-            f"Unknown region '{region}'. Choose one of {', '.join(REGIONS)} or 'all'."
-        )
+    else:
+        canonical = _normalize_region(normalized_input)
+        if canonical is None or canonical not in REGIONS:
+            raise FilterError(
+                f"Unknown region '{region}'. Choose one of {', '.join(REGIONS)} or 'all'."
+            )
+        normalized_region = canonical
     if data.empty:
         raise FilterError("No climate data is available to filter.")
 

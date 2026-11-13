@@ -20,9 +20,12 @@ class Settings:
     @classmethod
     def from_env(cls) -> Settings:
         """Create settings from environment variables and project defaults."""
+        default_data_file = PROJECT_ROOT / "data" / "africa_climate_merged_2004_2024.csv"
+        if not default_data_file.exists():
+            default_data_file = PROJECT_ROOT / "africa_climate_merged_2004_2024.csv"
         data_file = os.getenv(
             "CLIMATE_DATA_FILE",
-            str(PROJECT_ROOT / "africa_climate_merged_2004_2024.csv"),
+            str(default_data_file),
         )
         origins = os.getenv("CORS_ORIGINS", "*")
         return cls(

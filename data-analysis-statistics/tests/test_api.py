@@ -79,5 +79,5 @@ def test_api_invalid_range_and_no_data(tmp_path: Path) -> None:
             ).status_code
             == 400
         )
-        assert client.get("/data", params={"region": "West_Africa"}).status_code == 400
-        assert client.get("/data", params={"region": "South_Africa"}).status_code == 404
+        assert client.get("/data", params={"region": "Antarctica"}).status_code == 400
+        assert client.get("/data", params={"region": "Southern_Africa"}).status_code == 404
