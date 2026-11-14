@@ -410,6 +410,14 @@ export class EarthMap {
         const predictCardEl = document.getElementById('prediction-results-card');
         if (predictCardEl) predictCardEl.classList.add('hidden');
 
+        const chartSelect = document.getElementById('chart-type-select');
+        if (chartSelect) chartSelect.value = 'trending';
+        this.selectedChartType = 'trending';
+        const explainerEl = document.getElementById('chart-quick-explainer');
+        if (explainerEl) explainerEl.textContent = '';
+        this.updateChartExplanationPanel('trending', null);
+        this.lastAnalysisData = null;
+
         this.updateUiCard(null, 0, 'None', '');
     }
 
@@ -443,7 +451,11 @@ export class EarthMap {
         if (label) label.textContent = 'Analyzing...';
         if (status) status.textContent = 'Querying NASA climate observations and computing Mann-Kendall trend...';
 
-        const url = `/api/analyze?region=${encodeURIComponent(this.selectedPredefinedRegionId)}&variable=${encodeURIComponent(this.selectedVariable)}&start_year=${startYear}&end_year=${endYear}`;
+        const chartSelect = document.getElementById('chart-type-select');
+        const chartType = chartSelect ? chartSelect.value : (this.selectedChartType || 'trending');
+        this.selectedChartType = chartType;
+
+        const url = `/api/analyze?region=${encodeURIComponent(this.selectedPredefinedRegionId)}&variable=${encodeURIComponent(this.selectedVariable)}&start_year=${startYear}&end_year=${endYear}&chart_type=${encodeURIComponent(chartType)}`;
 
         try {
             const response = await fetch(url, {
@@ -583,99 +595,439 @@ export class EarthMap {
         resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
+    onChartTypeChange(newType) {
+        this.selectedChartType = newType;
+        if (!this.lastAnalysisData) return;
+        this.renderChart(newType);
+    }
+
     renderPlotlyChart(data) {
+        this.lastAnalysisData = data;
+        const chartSelect = document.getElementById('chart-type-select');
+        if (chartSelect) {
+            chartSelect.value = this.selectedChartType || 'trending';
+        }
+        this.renderChart(this.selectedChartType || 'trending');
+    }
+
+    renderChart(type) {
+        const data = this.lastAnalysisData;
+        if (!data) return;
+
         const container = document.getElementById('plotly-timeseries');
         if (!container || typeof Plotly === 'undefined') {
             console.warn('Plotly is not loaded yet or container missing');
             return;
         }
 
-        const dates = data.time_series.map(pt => pt.date);
-        const values = data.time_series.map(pt => pt.value);
+        const titleEl = document.getElementById('chart-variable-title');
+        const periodEl = document.getElementById('analysis-period');
+        const explainerEl = document.getElementById('chart-quick-explainer');
+        const overlay = document.getElementById('chart-loading-overlay');
 
-        const isTemp = data.variable.id === 'temperature_anomaly';
-        const primaryColor = isTemp ? '#dc2626' : '#0284c7';
-        const primaryFill = isTemp ? 'rgba(220, 38, 38, 0.06)' : 'rgba(2, 132, 199, 0.06)';
+        if (overlay) overlay.classList.remove('hidden');
 
-        // Trace 1: Monthly Observations
-        const traceMonthly = {
-            x: dates,
-            y: values,
-            type: 'scatter',
-            mode: 'lines+markers',
-            name: `Monthly ${data.variable.short_name}`,
-            line: {
-                color: primaryColor,
-                width: 1.5
-            },
-            marker: {
-                size: 3,
-                color: primaryColor
-            },
-            fill: 'tozeroy',
-            fillcolor: primaryFill,
-            hovertemplate: `<b>%{x}</b><br>Value: %{y:.2f} ${data.variable.unit}<extra></extra>`
-        };
+        try {
+            const isTemp = data.variable.id === 'temperature_anomaly';
+            const primaryColor = isTemp ? '#dc2626' : '#0284c7';
+            const primaryFill = isTemp ? 'rgba(220, 38, 38, 0.06)' : 'rgba(2, 132, 199, 0.06)';
 
-        const traces = [traceMonthly];
+            let traces = [];
+            let layout = {};
 
-        // Trace 2: Sen's Slope Trend Line
-        if (data.annual_trend && data.annual_trend.sen_line && data.annual_trend.sen_line.length >= 2) {
-            const senLine = data.annual_trend.sen_line;
-            const trendX = senLine.map(pt => `${pt.year}-06`);
-            const trendY = senLine.map(pt => pt.value);
+            if (type === 'mann_kendall_sen') {
+                // 4. Mann-Kendall / Sen's slope
+                if (titleEl) titleEl.textContent = `Annual ${data.variable.name} & Sen's Slope (Mann-Kendall)`;
+                if (periodEl) periodEl.textContent = `${data.period.start_year}–${data.period.end_year} (Annual Aggregated Means)`;
+                if (explainerEl) {
+                    explainerEl.textContent = `Non-parametric rank test on annual averages: evaluates monotonic trend immune to seasonal cycles (p = ${data.metrics.p_value.toFixed(4)}, τ = ${data.metrics.kendall_tau.toFixed(4)}, Sen's slope = ${data.metrics.slope_per_decade >= 0 ? '+' : ''}${data.metrics.slope_per_decade.toFixed(3)} ${data.variable.unit}/decade).`;
+                }
 
-            const traceTrend = {
-                x: trendX,
-                y: trendY,
-                type: 'scatter',
-                mode: 'lines',
-                name: "Sen's Slope Trend",
-                line: {
-                    color: '#ea580c',
-                    width: 3,
-                    dash: 'dash'
-                },
-                hovertemplate: `<b>Trend Estimate</b><br>Rate: ${data.metrics.slope_per_decade >= 0 ? '+' : ''}${data.metrics.slope_per_decade.toFixed(3)} ${data.variable.unit}/decade<extra></extra>`
+                const annualPoints = (data.trends && data.trends[data.variable.id]) ? data.trends[data.variable.id] : (data.annual_trend || []);
+                const years = annualPoints.map(p => p.year);
+                const values = annualPoints.map(p => p.value);
+                const senLines = annualPoints.map(p => p.sen_line);
+
+                traces.push({
+                    x: years,
+                    y: values,
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: `Annual Mean ${data.variable.short_name}`,
+                    marker: { size: 7, color: primaryColor, symbol: 'circle' },
+                    hovertemplate: `<b>Year %{x}</b><br>Annual Mean: %{y:.2f} ${data.variable.unit}<extra></extra>`
+                });
+
+                if (senLines && senLines.some(v => v !== null && v !== undefined)) {
+                    traces.push({
+                        x: years,
+                        y: senLines,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: `Sen's Slope (${data.metrics.slope_per_decade >= 0 ? '+' : ''}${data.metrics.slope_per_decade.toFixed(3)} ${data.variable.unit}/decade)`,
+                        line: { color: '#ea580c', width: 2.5, dash: 'dash' },
+                        hovertemplate: `<b>Sen's Slope Trend</b><br>Value: %{y:.2f} ${data.variable.unit}<extra></extra>`
+                    });
+                }
+
+                layout = {
+                    margin: { t: 25, r: 25, b: 45, l: 55 },
+                    xaxis: {
+                        title: { text: 'Calendar Year', font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#e2e8f0',
+                        dtick: 2,
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    yaxis: {
+                        title: { text: `Annual Mean ${data.variable.name} (${data.variable.unit})`, font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#cbd5e1',
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    legend: { orientation: 'h', x: 0, y: 1.15, font: { size: 11, color: '#334155' } },
+                    hovermode: 'closest',
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent',
+                    autosize: true
+                };
+
+            } else if (type === 'correlation') {
+                // 3. Correlation (Bivariate Scatter Plot)
+                if (titleEl) titleEl.textContent = `Bivariate Climate Correlation: Precipitation vs Temperature Anomaly`;
+                if (periodEl) periodEl.textContent = `${data.period.start_year}–${data.period.end_year} (Paired Monthly Observations)`;
+                if (explainerEl) {
+                    const c = data.correlation;
+                    if (c && c.coefficient !== null && c.coefficient !== undefined) {
+                        const ciStr = (c.confidence_interval_95 && c.confidence_interval_95.length === 2) 
+                            ? ` [95% CI: ${c.confidence_interval_95[0].toFixed(3)} to ${c.confidence_interval_95[1].toFixed(3)}]` 
+                            : '';
+                        explainerEl.textContent = `Pearson correlation between monthly Precipitation (mm/day) and Temperature Anomaly (°C): r = ${c.coefficient.toFixed(3)}${ciStr}, p = ${c.p_value.toFixed(4)} (n = ${c.sample_size}). ${c.interpretation}`;
+                    } else {
+                        explainerEl.textContent = `Correlation between paired monthly precipitation and temperature anomaly observations.`;
+                    }
+                }
+
+                const scatter = data.scatter || [];
+                traces.push({
+                    x: scatter.map(p => p.precipitation_mm),
+                    y: scatter.map(p => p.temperature_anomaly),
+                    customdata: scatter.map(p => p.date),
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'Monthly Pairs',
+                    marker: { size: 6, color: '#0284c7', opacity: 0.75 },
+                    hovertemplate: `<b>%{customdata}</b><br>Precipitation: %{x:.2f} mm/day<br>Temp Anomaly: %{y:.2f} °C<extra></extra>`
+                });
+
+                layout = {
+                    margin: { t: 25, r: 25, b: 45, l: 55 },
+                    xaxis: {
+                        title: { text: 'Precipitation Rate (mm/day)', font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#e2e8f0',
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    yaxis: {
+                        title: { text: 'Surface Temperature Anomaly (°C)', font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#cbd5e1',
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    legend: { orientation: 'h', x: 0, y: 1.15, font: { size: 11, color: '#334155' } },
+                    hovermode: 'closest',
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent',
+                    autosize: true
+                };
+
+            } else if (type === 'linear_regression') {
+                // 2. Linear Regression (Scatter + Fitted OLS Line)
+                if (titleEl) titleEl.textContent = `Linear Regression: Temperature Anomaly vs Precipitation`;
+                if (periodEl) periodEl.textContent = `${data.period.start_year}–${data.period.end_year} (Ordinary Least Squares)`;
+                if (explainerEl) {
+                    const r = data.regression;
+                    if (r && r.slope !== null && r.slope !== undefined) {
+                        explainerEl.textContent = `Ordinary Least Squares (OLS) model: Temp = (${r.slope.toFixed(4)} × Precip) + (${r.intercept.toFixed(3)}) | R² = ${r.r_squared.toFixed(4)} (${(r.r_squared * 100).toFixed(1)}% variance explained), p = ${r.p_value.toFixed(4)}, SE = ${r.standard_error.toFixed(4)}.`;
+                    } else {
+                        explainerEl.textContent = `Linear regression model fitted between monthly precipitation and temperature anomaly observations.`;
+                    }
+                }
+
+                const scatter = data.scatter || [];
+                traces.push({
+                    x: scatter.map(p => p.precipitation_mm),
+                    y: scatter.map(p => p.temperature_anomaly),
+                    customdata: scatter.map(p => p.date),
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'Observations',
+                    marker: { size: 5, color: '#64748b', opacity: 0.65 },
+                    hovertemplate: `<b>%{customdata}</b><br>Precipitation: %{x:.2f} mm/day<br>Temp Anomaly: %{y:.2f} °C<extra></extra>`
+                });
+
+                if (data.regression_line && data.regression_line.length >= 2) {
+                    const rLine = data.regression_line;
+                    const r = data.regression;
+                    const lineName = (r && r.slope !== null) 
+                        ? `OLS Fit: y = ${r.slope.toFixed(3)}x + (${r.intercept.toFixed(2)}) (R² = ${r.r_squared.toFixed(3)})` 
+                        : 'Regression Line';
+
+                    traces.push({
+                        x: rLine.map(p => p.precipitation_mm),
+                        y: rLine.map(p => p.temperature_anomaly),
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: lineName,
+                        line: { color: '#2563eb', width: 2.5 },
+                        hovertemplate: `<b>Linear Fit</b><br>Precipitation: %{x:.2f} mm/day<br>Fitted Temp: %{y:.2f} °C<extra></extra>`
+                    });
+                }
+
+                layout = {
+                    margin: { t: 25, r: 25, b: 45, l: 55 },
+                    xaxis: {
+                        title: { text: 'Precipitation Rate (mm/day)', font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#e2e8f0',
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    yaxis: {
+                        title: { text: 'Surface Temperature Anomaly (°C)', font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#cbd5e1',
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    legend: { orientation: 'h', x: 0, y: 1.15, font: { size: 11, color: '#334155' } },
+                    hovermode: 'closest',
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent',
+                    autosize: true
+                };
+
+            } else if (type === 'regression') {
+                // 1. Regression (Residuals Plot)
+                if (titleEl) titleEl.textContent = `Regression Residuals: Model Fit Errors Over Time`;
+                if (periodEl) periodEl.textContent = `${data.period.start_year}–${data.period.end_year} (Residuals: Observed - Fitted)`;
+                if (explainerEl) {
+                    explainerEl.textContent = `Regression residuals (e = y - ŷ): shows monthly deviation of actual temperature anomaly from the linear regression prediction. Homogeneous spread around zero indicates unbiased fit.`;
+                }
+
+                const residuals = data.residuals || [];
+                traces.push({
+                    x: residuals.map(p => p.date),
+                    y: residuals.map(p => p.residual),
+                    type: 'bar',
+                    name: 'Residual Error',
+                    marker: {
+                        color: residuals.map(p => p.residual >= 0 ? '#10b981' : '#f43f5e'),
+                        opacity: 0.85
+                    },
+                    hovertemplate: `<b>%{x}</b><br>Residual Error: %{y:.3f} °C<extra></extra>`
+                });
+
+                if (residuals.length >= 2) {
+                    traces.push({
+                        x: [residuals[0].date, residuals[residuals.length - 1].date],
+                        y: [0, 0],
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'Zero Error Baseline',
+                        line: { color: '#475569', width: 1.5, dash: 'dot' },
+                        hoverinfo: 'none'
+                    });
+                }
+
+                layout = {
+                    margin: { t: 25, r: 25, b: 45, l: 55 },
+                    xaxis: {
+                        title: { text: 'Time (Year-Month)', font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#e2e8f0',
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    yaxis: {
+                        title: { text: 'Residual Error (°C)', font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#cbd5e1',
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    legend: { orientation: 'h', x: 0, y: 1.15, font: { size: 11, color: '#334155' } },
+                    hovermode: 'closest',
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent',
+                    autosize: true
+                };
+
+            } else {
+                // 5. Trending (Default: Monthly observations + Sen's slope line)
+                if (titleEl) titleEl.textContent = `Monthly ${data.variable.name} & Trend Line`;
+                if (periodEl) periodEl.textContent = `${data.period.start_year}–${data.period.end_year} (${data.time_series.length} monthly observations)`;
+                if (explainerEl) {
+                    explainerEl.textContent = `Continuous monthly observations with Sen's non-parametric median slope fitted trend line (${data.metrics.slope_per_decade >= 0 ? '+' : ''}${data.metrics.slope_per_decade.toFixed(3)} ${data.variable.unit}/decade).`;
+                }
+
+                const dates = data.time_series.map(pt => pt.date);
+                const values = data.time_series.map(pt => pt.value);
+
+                traces.push({
+                    x: dates,
+                    y: values,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: `Monthly ${data.variable.short_name}`,
+                    line: { color: primaryColor, width: 1.5 },
+                    marker: { size: 3, color: primaryColor },
+                    fill: 'tozeroy',
+                    fillcolor: primaryFill,
+                    hovertemplate: `<b>%{x}</b><br>Value: %{y:.2f} ${data.variable.unit}<extra></extra>`
+                });
+
+                const annualPoints = (data.trends && data.trends[data.variable.id]) ? data.trends[data.variable.id] : (data.annual_trend || []);
+                if (annualPoints && annualPoints.length >= 2 && annualPoints.some(p => p.sen_line !== null && p.sen_line !== undefined)) {
+                    traces.push({
+                        x: annualPoints.map(p => `${p.year}-06`),
+                        y: annualPoints.map(p => p.sen_line),
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: "Sen's Slope Trend",
+                        line: { color: '#ea580c', width: 3, dash: 'dash' },
+                        hovertemplate: `<b>Trend Estimate</b><br>Rate: ${data.metrics.slope_per_decade >= 0 ? '+' : ''}${data.metrics.slope_per_decade.toFixed(3)} ${data.variable.unit}/decade<extra></extra>`
+                    });
+                }
+
+                layout = {
+                    margin: { t: 25, r: 25, b: 45, l: 55 },
+                    xaxis: {
+                        title: { text: 'Time (Year-Month)', font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#e2e8f0',
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    yaxis: {
+                        title: { text: `${data.variable.name} (${data.variable.unit})`, font: { size: 11, color: '#64748b' } },
+                        gridcolor: '#f1f5f9',
+                        zerolinecolor: '#cbd5e1',
+                        tickfont: { size: 10, color: '#64748b' }
+                    },
+                    legend: { orientation: 'h', x: 0, y: 1.15, font: { size: 11, color: '#334155' } },
+                    hovermode: 'closest',
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent',
+                    autosize: true
+                };
+            }
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+                displaylogo: false
             };
 
-            traces.push(traceTrend);
+            Plotly.newPlot(container, traces, layout, config);
+        } catch (plotErr) {
+            console.error('Plotly render error:', plotErr);
+            container.innerHTML = `<div class="p-6 text-center text-xs text-rose-600 font-semibold">⚠️ Failed to render chart: ${plotErr.message}</div>`;
+        } finally {
+            if (overlay) overlay.classList.add('hidden');
+            this.updateChartExplanationPanel(type, data);
+        }
+    }
+
+    /**
+     * Updates the collapsible "How to read this chart" panel with precise technical
+     * definitions and real API synthesis results for the current selection.
+     */
+    updateChartExplanationPanel(chartType, data) {
+        const typeBadge = document.getElementById('chart-guide-type-badge');
+        const howToReadEl = document.getElementById('chart-guide-how-to-read');
+        const currentResultEl = document.getElementById('chart-guide-current-result');
+
+        const labels = {
+            'trending': 'Trending',
+            'mann_kendall_sen': "Mann-Kendall / Sen's slope",
+            'correlation': 'Correlation',
+            'linear_regression': 'Linear Regression',
+            'regression': 'Regression (Residuals)'
+        };
+
+        if (typeBadge) {
+            typeBadge.textContent = labels[chartType] || 'Trending';
         }
 
-        const layout = {
-            margin: { t: 25, r: 25, b: 45, l: 55 },
-            xaxis: {
-                title: { text: 'Time (Year-Month)', font: { size: 11, color: '#64748b' } },
-                gridcolor: '#f1f5f9',
-                zerolinecolor: '#e2e8f0',
-                tickfont: { size: 10, color: '#64748b' }
-            },
-            yaxis: {
-                title: { text: `${data.variable.name} (${data.variable.unit})`, font: { size: 11, color: '#64748b' } },
-                gridcolor: '#f1f5f9',
-                zerolinecolor: '#cbd5e1',
-                tickfont: { size: 10, color: '#64748b' }
-            },
-            legend: {
-                orientation: 'h',
-                x: 0,
-                y: 1.15,
-                font: { size: 11, color: '#334155' }
-            },
-            hovermode: 'closest',
-            paper_bgcolor: 'transparent',
-            plot_bgcolor: 'transparent',
-            autosize: true
+        if (!data || !data.success) {
+            if (howToReadEl) {
+                howToReadEl.textContent = 'Select an African region and run an analysis to view visual guidance.';
+            }
+            if (currentResultEl) {
+                currentResultEl.textContent = 'No result available for this selection.';
+            }
+            return;
+        }
+
+        const varName = data.variable.name;
+        const varUnit = data.variable.unit;
+        const regionName = data.region.name;
+        const startYear = data.period.start_year;
+        const endYear = data.period.end_year;
+
+        const formatPValue = (p) => {
+            if (p === null || p === undefined) return '--';
+            if (p < 0.0001) return 'p < 0.0001';
+            return `p = ${p.toFixed(4)}`;
         };
 
-        const config = {
-            responsive: true,
-            displayModeBar: true,
-            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-            displaylogo: false
+        // Static Technical Guides (3 to 5 sentences tailored for scientists and researchers)
+        const staticGuides = {
+            'trending': `The horizontal axis indexes time across continuous monthly observations (Year-Month), while the vertical axis measures ${varName} in ${varUnit}. Solid markers and lines indicate monthly observed anomalies with a subtle shaded area anchored to zero. The dashed line depicts the non-parametric Sen's median slope fitted across the selected window. This representation reveals seasonal cycles, intra-annual extremes, and long-term trajectory simultaneously.`,
+            'mann_kendall_sen': `The horizontal axis represents calendar years, while the vertical axis plots annual aggregated mean ${varName} in ${varUnit}. Circular markers show annual mean values, effectively filtering high-frequency intra-annual seasonality. The overlaid dashed line illustrates Sen's robust, non-parametric median slope estimator. This configuration accompanies the rank-based Mann-Kendall test to evaluate monotonic multi-year trends without assuming residual normality.`,
+            'correlation': `The horizontal axis plots monthly Precipitation Rate (mm/day), and the vertical axis plots Surface Temperature Anomaly (°C). Each circular point represents a single paired monthly observation in the selected macro-region. The distribution of points illustrates the bivariate dispersion and joint distribution between moisture and thermal variations. No causal mechanism is inferred; the visualization evaluates empirical co-variation and linear association.`,
+            'linear_regression': `The horizontal axis represents the predictor variable (Precipitation Rate in mm/day), and the vertical axis represents the dependent response (Surface Temperature Anomaly in °C). Scattered points represent empirical paired monthly observations. The solid linear fit line is estimated via Ordinary Least Squares (OLS) minimizing sum-of-squared errors. This bivariate model evaluates the rate of change and proportion of variance explained between climate variables.`,
+            'regression': `The horizontal axis tracks time by monthly intervals, and the vertical axis plots regression residuals (errors) in °C. Each vertical bar shows the residual difference between observed and fitted temperature anomaly (e = y - ŷ). A dashed baseline marks zero residual error. Homogeneous, symmetric spread around zero indicates an unbiased model fit, whereas clustering or persistent drifts signify unmodeled non-linear dynamics or autocorrelation.`
         };
 
-        Plotly.newPlot(container, traces, layout, config);
+        if (howToReadEl) {
+            howToReadEl.textContent = staticGuides[chartType] || staticGuides['trending'];
+        }
+
+        // Dynamic synthesis sentences derived strictly from real API metrics
+        if (currentResultEl) {
+            let resultSentence = 'No result available for this selection.';
+
+            if (chartType === 'mann_kendall_sen') {
+                const m = data.metrics;
+                const sign = m.slope_per_decade >= 0 ? '+' : '';
+                resultSentence = `For ${regionName} (${startYear}–${endYear}), annual mean ${varName} exhibits an estimated Sen's slope of ${sign}${m.slope_per_decade.toFixed(3)} ${varUnit}/decade (Kendall's τ = ${m.kendall_tau.toFixed(4)}, ${formatPValue(m.p_value)}, n = ${m.sample_size} annual means), evaluated as ${m.verdict.toLowerCase()} at α = 0.05.`;
+            } else if (chartType === 'correlation') {
+                const c = data.correlation;
+                if (c && c.coefficient !== null && c.coefficient !== undefined) {
+                    const ciStr = (c.confidence_interval_95 && c.confidence_interval_95.length === 2)
+                        ? ` (95% CI [${c.confidence_interval_95[0].toFixed(3)}, ${c.confidence_interval_95[1].toFixed(3)}])`
+                        : '';
+                    resultSentence = `The empirical association between monthly Precipitation and Surface Temperature Anomaly across ${regionName} yields a Pearson correlation of r = ${c.coefficient.toFixed(3)}${ciStr} (${formatPValue(c.p_value)}, n = ${c.sample_size} paired months), indicating ${c.interpretation.toLowerCase()}`;
+                }
+            } else if (chartType === 'linear_regression') {
+                const r = data.regression;
+                if (r && r.slope !== null && r.slope !== undefined) {
+                    const r2Pct = (r.r_squared * 100).toFixed(1);
+                    resultSentence = `The fitted OLS model for ${regionName} estimates a slope of ${r.slope.toFixed(4)} °C/(mm/day) with intercept ${r.intercept.toFixed(3)} °C (R² = ${r.r_squared.toFixed(4)}, accounting for ${r2Pct}% of temperature variance; ${formatPValue(r.p_value)}, SE = ${r.standard_error.toFixed(4)}, n = ${r.sample_size} months).`;
+                }
+            } else if (chartType === 'regression') {
+                const r = data.regression;
+                if (r && r.r_squared !== null && r.r_squared !== undefined) {
+                    const r2Pct = (r.r_squared * 100).toFixed(1);
+                    resultSentence = `Analysis of regression residuals across ${regionName} (${r.sample_size} monthly points) reflects an OLS model explaining ${r2Pct}% of variance (R² = ${r.r_squared.toFixed(4)}, standard error = ${r.standard_error.toFixed(4)} °C), with deviations indicating variance unexplained by a simple linear association.`;
+                }
+            } else {
+                // trending (default)
+                const m = data.metrics;
+                const sign = m.slope_per_decade >= 0 ? '+' : '';
+                resultSentence = `Over the ${startYear}–${endYear} record (${data.time_series.length} monthly observations), ${regionName} demonstrates a ${m.direction} trend in ${varName} at an estimated rate of ${sign}${m.slope_per_decade.toFixed(3)} ${varUnit}/decade (${formatPValue(m.p_value)}, ${m.is_significant ? 'significant' : 'non-significant'} at α = 0.05).`;
+            }
+
+            currentResultEl.textContent = resultSentence;
+        }
     }
 
     async runPrediction() {

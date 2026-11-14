@@ -242,6 +242,10 @@ class AnalysisService
                 ],
                 'time_series' => $timeSeries,
                 'annual_trend' => $trendSeries,
+                'scatter' => $chartsData['scatter'] ?? [],
+                'regression_line' => $chartsData['regression_line'] ?? [],
+                'residuals' => $chartsData['residuals'] ?? [],
+                'trends' => $chartsData['trends'] ?? [],
                 'correlation' => $analysisData['correlation'] ?? null,
                 'regression' => $analysisData['regression'] ?? null,
                 'caveats' => $analysisData['assumptions'] ?? [

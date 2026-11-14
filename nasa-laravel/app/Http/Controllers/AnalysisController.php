@@ -45,6 +45,7 @@ class AnalysisController extends Controller
             'variable' => ['nullable', 'string', 'in:temperature_anomaly,precipitation_mm'],
             'start_year' => ['nullable', 'integer', 'min:2004', 'max:2024'],
             'end_year' => ['nullable', 'integer', 'min:2004', 'max:2024'],
+            'chart_type' => ['nullable', 'string', 'in:trending,mann_kendall_sen,correlation,linear_regression,regression'],
         ]);
 
         if ($validator->fails()) {

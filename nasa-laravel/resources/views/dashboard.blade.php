@@ -394,19 +394,110 @@
 
                                 <!-- Chart & Summary (Col 8) -->
                                 <div class="xl:col-span-8 space-y-4">
-                                    <div class="flex items-center justify-between">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div>
                                             <h4 id="chart-variable-title" class="text-xs font-bold text-slate-800">Monthly Time Series &amp; Long-Term Trend</h4>
                                             <p id="analysis-period" class="text-[11px] text-slate-500">2004–2024</p>
                                         </div>
-                                        <div class="text-[11px] font-mono text-slate-400">
-                                            Interactive: Scroll to zoom, double-click to reset
+                                        
+                                        <!-- Chart Type Selector Dropdown -->
+                                        <div class="flex items-center gap-2">
+                                            <label for="chart-type-select" class="text-[11px] font-bold text-slate-600 shrink-0">Chart type:</label>
+                                            <select 
+                                                id="chart-type-select" 
+                                                onchange="window.earthTrendMap && window.earthTrendMap.onChartTypeChange(this.value)"
+                                                class="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs cursor-pointer"
+                                            >
+                                                <option value="trending" selected>Trending</option>
+                                                <option value="mann_kendall_sen">Mann-Kendall / Sen's slope</option>
+                                                <option value="correlation">Correlation</option>
+                                                <option value="linear_regression">Linear Regression</option>
+                                                <option value="regression">Regression</option>
+                                            </select>
                                         </div>
                                     </div>
 
                                     <!-- Plotly Time Series Chart Container -->
-                                    <div class="w-full bg-slate-50/70 border border-slate-200 rounded-xl p-2 min-h-[320px]">
+                                    <div class="w-full bg-slate-50/70 border border-slate-200 rounded-xl p-2 min-h-[320px] relative">
+                                        <div id="chart-loading-overlay" class="hidden absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-10 rounded-xl">
+                                            <div class="flex items-center gap-2 text-xs font-bold text-slate-700">
+                                                <svg class="animate-spin w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                                </svg>
+                                                <span>Rendering chart...</span>
+                                            </div>
+                                        </div>
                                         <div id="plotly-timeseries" class="w-full h-80"></div>
+                                    </div>
+                                    
+                                    <!-- One short plain-language line explaining what the chart shows -->
+                                    <p id="chart-quick-explainer" class="text-[11px] text-slate-500 italic px-1"></p>
+
+                                    <!-- Collapsible "How to read this chart" Panel -->
+                                    <div 
+                                        x-data="{ open: window.innerWidth >= 1024 }" 
+                                        class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs"
+                                    >
+                                        <button 
+                                            type="button" 
+                                            @click="open = !open" 
+                                            :aria-expanded="open.toString()" 
+                                            aria-controls="chart-guide-body"
+                                            class="w-full flex items-center justify-between px-4 py-3 bg-slate-50/70 hover:bg-slate-100/80 text-left transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                        >
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span class="text-xs font-bold text-slate-800">How to read this chart</span>
+                                                <span id="chart-guide-type-badge" class="ml-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-semibold">Trending</span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                                                <span x-text="open ? 'Hide guide' : 'Show guide'" class="text-[11px]"></span>
+                                                <svg 
+                                                    class="w-4 h-4 text-slate-400 transition-transform duration-200" 
+                                                    :class="open ? 'rotate-180' : ''" 
+                                                    fill="none" 
+                                                    stroke="currentColor" 
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        </button>
+
+                                        <div 
+                                            id="chart-guide-body" 
+                                            x-show="open" 
+                                            x-transition:enter="transition ease-out duration-150"
+                                            x-transition:enter-start="opacity-0 -translate-y-1"
+                                            x-transition:enter-end="opacity-100 translate-y-0"
+                                            x-transition:leave="transition ease-in duration-100"
+                                            x-transition:leave-start="opacity-100 translate-y-0"
+                                            x-transition:leave-end="opacity-0 -translate-y-1"
+                                            class="p-4 space-y-3.5 border-t border-slate-200/80 text-xs"
+                                        >
+                                            <!-- Section 1: How to read the chart (Technical Static Description) -->
+                                            <div>
+                                                <div class="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400 mb-1 flex items-center gap-1.5">
+                                                    <span>1. Guide &amp; Visual Representation</span>
+                                                </div>
+                                                <p id="chart-guide-how-to-read" class="text-xs text-slate-700 leading-relaxed">
+                                                    Select an African region and run an analysis to view visual guidance.
+                                                </p>
+                                            </div>
+
+                                            <!-- Section 2: Result for the current selection (Dynamic API Synthesis) -->
+                                            <div class="pt-2.5 border-t border-slate-100">
+                                                <div class="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400 mb-1 flex items-center gap-1.5">
+                                                    <span>2. Result for Current Selection</span>
+                                                </div>
+                                                <p id="chart-guide-current-result" class="text-xs font-medium text-slate-900 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                                                    No result available for this selection.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Chart Footnote & Plain-Language Interpretation -->

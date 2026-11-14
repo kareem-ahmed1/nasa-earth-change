@@ -31,6 +31,7 @@ class FilterRequest(BaseModel):
     region: RegionName = "all"
     start_year: int | None = None
     end_year: int | None = None
+    chart_type: str | None = None
 
 
 class YearRange(BaseModel):
