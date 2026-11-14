@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start Python FastAPI (:8001)",
+            "type": "shell",
+            "command": "${workspaceFolder}/data-analysis-statistics/.venv313/Scripts/python.exe -m uvicorn src.api.main:app --host 127.0.0.1 --port 8001 --reload",
+            "options": {
+                "cwd": "${workspaceFolder}/data-analysis-statistics"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Start Laravel Server (:8000)",
+            "type": "shell",
+            "command": "php artisan serve --port 8000",
+            "options": {
+                "cwd": "${workspaceFolder}/nasa-laravel"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Run All (Python + Laravel)",
+            "dependsOn": [
+                "Start Python FastAPI (:8001)",
+                "Start Laravel Server (:8000)"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}

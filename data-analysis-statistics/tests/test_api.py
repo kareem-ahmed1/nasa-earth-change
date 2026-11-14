@@ -53,10 +53,13 @@ def test_api_endpoints_use_cleaned_data(tmp_path: Path) -> None:
             "precipitation_mm",
         }
 
-        charts = client.get("/charts", params={"region": "all"})
+        charts = client.get("/charts", params={"region": "all", "chart_type": "mann_kendall_sen"})
         assert charts.status_code == 200
         assert len(charts.json()["time_series"]) == 60
         assert "yearly_averages_per_region" in charts.json()
+        assert "scatter" in charts.json()
+        assert "regression_line" in charts.json()
+        assert "residuals" in charts.json()
 
 
 def test_api_invalid_range_and_no_data(tmp_path: Path) -> None:
@@ -79,5 +82,5 @@ def test_api_invalid_range_and_no_data(tmp_path: Path) -> None:
             ).status_code
             == 400
         )
-        assert client.get("/data", params={"region": "West_Africa"}).status_code == 400
-        assert client.get("/data", params={"region": "South_Africa"}).status_code == 404
+        assert client.get("/data", params={"region": "Antarctica"}).status_code == 400
+        assert client.get("/data", params={"region": "Southern_Africa"}).status_code == 404

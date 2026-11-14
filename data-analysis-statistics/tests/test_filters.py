@@ -37,4 +37,4 @@ def test_rejects_unknown_region(climate_frame: pd.DataFrame) -> None:
     """Region selection is limited to the supported five regions."""
     data, _ = clean_climate_data(climate_frame)
     with pytest.raises(FilterError, match="Unknown region"):
-        filter_data(data, "West_Africa")
+        filter_data(data, "Antarctica")

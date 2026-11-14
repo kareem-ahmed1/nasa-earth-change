@@ -11,8 +11,15 @@ RegionName = Literal[
     "Central_Africa",
     "East_Africa",
     "North_Africa",
+    "West_Africa",
+    "Southern_Africa",
     "Sahel_Region",
     "South_Africa",
+    "central-africa",
+    "east-africa",
+    "north-africa",
+    "west-africa",
+    "southern-africa",
 ]
 
 
@@ -24,6 +31,7 @@ class FilterRequest(BaseModel):
     region: RegionName = "all"
     start_year: int | None = None
     end_year: int | None = None
+    chart_type: str | None = None
 
 
 class YearRange(BaseModel):

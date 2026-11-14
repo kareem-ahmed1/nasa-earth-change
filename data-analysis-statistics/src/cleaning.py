@@ -15,8 +15,8 @@ REGIONS = (
     "Central_Africa",
     "East_Africa",
     "North_Africa",
-    "Sahel_Region",
-    "South_Africa",
+    "West_Africa",
+    "Southern_Africa",
 )
 REQUIRED_COLUMNS = {
     "Region",
@@ -59,6 +59,13 @@ def _normalize_region(value: object) -> str | None:
     if pd.isna(value):
         return None
     normalized = re.sub(r"[\s-]+", "_", str(value).strip()).lower()
+    aliases = {
+        "sahel_region": "West_Africa",
+        "sahel": "West_Africa",
+        "south_africa": "Southern_Africa",
+    }
+    if normalized in aliases:
+        return aliases[normalized]
     region_map = {region.lower(): region for region in REGIONS}
     return region_map.get(normalized)
 
